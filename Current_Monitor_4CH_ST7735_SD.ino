@@ -71,7 +71,7 @@ boolean sdStatus=false;
   Sparkfun SD shield: pin 8
   Adafruit SD shields and modules: pin 10
 */
-#define SS 16
+#define SDCARD_SS_PIN 16
 // SDCARD_SS_PIN is defined for the built-in SD on some boards.
 #ifndef SDCARD_SS_PIN
 const uint8_t SD_CS_PIN = SS;
@@ -81,8 +81,9 @@ const uint8_t SD_CS_PIN = SDCARD_SS_PIN;
 #endif  // SDCARD_SS_PIN
 
 // Try max SPI clock for an SD. Reduce SPI_CLOCK if errors occur.
-#define SPI_CLOCK SD_SCK_MHZ(50)
+#define SPI_CLOCK SD_SCK_MHZ(25)
 
+#if 0
 // Try to select the best SD card configuration.
 #if HAS_SDIO_CLASS
 #define SD_CONFIG SdioConfig(FIFO_SDIO)
@@ -91,6 +92,10 @@ const uint8_t SD_CS_PIN = SDCARD_SS_PIN;
 #else  // HAS_SDIO_CLASS
 #define SD_CONFIG SdSpiConfig(SD_CS_PIN, SHARED_SPI, SPI_CLOCK)
 #endif  // HAS_SDIO_CLASS
+#endif
+
+#define SD_CONFIG SdSpiConfig(SD_CS_PIN, SHARED_SPI, SPI_CLOCK)
+
 
 #if SD_FAT_TYPE == 0
 SdFat sd;
@@ -133,7 +138,48 @@ typedef struct
   float power_mW = 0;
 } INA219Measurement;
 
+
+
 INA219Measurement ina219Measurement[4];
+
+//------------------------------------------------------------------------------
+// Call back for file timestamps.  Only called for file create and sync().
+void dateTime(uint16_t* date, uint16_t* time, uint8_t* ms10) {
+  DateTime now = rtc.now();
+  // Return date using FS_DATE macro to format fields.
+  *date = FS_DATE(now.year(), now.month(), now.day());
+
+  // Return time using FS_TIME macro to format fields.
+  *time = FS_TIME(now.hour(), now.minute(), now.second());
+
+  // Return low time bits in units of 10 ms, 0 <= ms10 <= 199.
+  *ms10 = now.second() & 1 ? 100 : 0;
+}
+
+//------------------------------------------------------------------------------
+#define error(msg) (Serial.println(F("error " msg)), false)
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+void printField(Print* pr, char sep, uint8_t v) {
+  if (sep) {
+    pr->write(sep);
+  }
+  if (v < 10) {
+    pr->write('0');
+  }
+  pr->print(v);
+}
+//------------------------------------------------------------------------------
+void printNow(Print* pr) {
+  DateTime now = rtc.now();
+  pr->print(now.year());
+  printField(pr, '-',now.month());
+  printField(pr, '-',now.day());
+  printField(pr, ' ',now.hour());
+  printField(pr, ':',now.minute());
+  printField(pr, ':',now.second());
+}
  
 void setup(void) {
   unsigned long epochTime;
@@ -214,18 +260,38 @@ void setup(void) {
 
 
 
+  // Set callback
+  FsDateTime::setCallback(dateTime);
 
-  if (!sd.begin(chipSelect)) {
-    Serial.println("Initialization failed!");
+  if (!sd.begin(SD_CONFIG)) {
+    sd.initErrorHalt(&Serial);
     tft.drawString("SD Failed", 0,100, 2);
   } else {
     sdStatus = true;
     Serial.println("SD Initialized!");
   }
+
+  if (sdStatus == true) {
+    if (!file.open("RtcTest.txt", FILE_WRITE)) {
+      Serial.println(F("file.open failed"));
+      return;
+    }
+    // Print current date time to file.
+    file.print(F("Test file at: "));
+    printNow(&file);
+    file.println();
+
+    file.close();
+    // List files in SD root.
+    sd.ls(LS_DATE | LS_SIZE);
+    Serial.println(F("Done"));
+  }
 }
 
+static uint32_t count = 0;
+
 void loop() {
-  char buf[6];
+  char buf[20];
   static uint32_t i;
   float shuntvoltage = 0;
   float busvoltage = 0;
@@ -240,9 +306,9 @@ void loop() {
   String fullstring = currentDate + "," +
          String(dt.hour()) + "," + String(dt.minute()) + "," + String(dt.second()) + "," ;  
 
-  Serial.print(" seconds since 1970: ");
-  Serial.print(dt.unixtime());
-  Serial.print("\tCurrent Date/Time "); Serial.println(fullstring);
+//  Serial.print(" seconds since 1970: ");
+//  Serial.print(dt.unixtime());
+//  Serial.print("\tCurrent Date/Time "); Serial.println(fullstring);
   if (ina219Status[0] == true) {
 
     
@@ -384,35 +450,37 @@ void loop() {
     tft.drawString("N/A", 84, 80, 2);
   }
 
-  sprintf(buf, "%d", dt.unixtime());
+  sprintf(buf, "%4d/%2d/%2d %2d:%02d", dt.year(), dt.month(), dt.day(), dt.hour(), dt.minute());
   tft.drawString(buf, 0, 100, 2);
   timeClient.update();
 
-#if 0
-
-  File dataFile = SD.open("datalog.txt", FILE_WRITE);
-
-  // if the file is available, write to it:
-  if (dataFile) {
-    
-    String dataString = fullstring+ina219_0S+","+
+  String dataString = fullstring+ina219_0S+","+
                                 ina219_1S+","+
                                 ina219_2S+","+
                                 ina219_3S      ;
 
 
-    dataFile.println(dataString);
-                                    
-    dataFile.close();
 
-#endif
-    
+  if (sdStatus == true) {
+    count ++;
+    if (count > 9) {
+      count = 0;
+      Serial.println("File lists");
+      sd.ls(LS_DATE|LS_SIZE);
+    }
     // print to the serial port too:
     Serial.println(dataString);
-  }
-  // if the file isn't open, pop up an error:
-  else {
-    Serial.println("error opening datalog.txt");
+
+    Serial.println("Open ina219.txt for writting");
+    if (!file.open("ina219.txt", FILE_WRITE)) {
+      Serial.println(F("file.open failed"));
+      delay(1000);
+      return;
+    }
+    file.print(dataString);
+    file.println();
+    file.close();
+
   }
   delay(1000);
 }

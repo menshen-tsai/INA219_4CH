@@ -137,6 +137,12 @@ void setup(void) {
   while (!Serial) {
   }
 
+  Serial.print(__FILE__);
+  Serial.print(" created at ");
+  Serial.print(__DATE__);
+  Serial.print(" ");
+  Serial.println(__TIME__);
+  
   Serial.print("Connecting to ");
   Serial.println(ssid);
   WiFi.begin(ssid, password);
@@ -278,10 +284,10 @@ void loop() {
     ina219Measurement[0].current_mA = ina219_0.getCurrent_mA();
     ina219Measurement[0].power_mW = ina219_0.getPower_mW();
     ina219Measurement[0].loadvoltage = ina219Measurement[0].busvoltage + (ina219Measurement[0].shuntvoltage / 1000);
-    ina219_0S = String(ina219Measurement[0].shuntvoltage) + "," +
-                      String(ina219Measurement[0].busvoltage) + "," +
-                      String(ina219Measurement[0].current_mA) + "," +
-                      String(ina219Measurement[0].power_mW);
+    ina219_0S = String(ina219Measurement[0].shuntvoltage*1000,2) + "," +
+                      String(ina219Measurement[0].busvoltage*1000,2) + "," +
+                      String(ina219Measurement[0].current_mA,3) + "," +
+                      String(ina219Measurement[0].power_mW,3);
     sprintf(buf, "%4d ", int(ina219Measurement[0].busvoltage*1000));
     tft.drawString(buf, 12, 20, 2);
     sprintf(buf, "%4d ", int(ina219Measurement[0].current_mA));
@@ -313,10 +319,10 @@ void loop() {
     ina219Measurement[1].power_mW = ina219_1.getPower_mW();
     ina219Measurement[1].loadvoltage = ina219Measurement[1].busvoltage + (ina219Measurement[1].shuntvoltage / 1000);
 
-    ina219_1S = String(ina219Measurement[1].shuntvoltage) + "," +
-                      String(ina219Measurement[1].busvoltage) + "," +
-                      String(ina219Measurement[1].current_mA) + "," +
-                      String(ina219Measurement[1].power_mW);
+    ina219_1S = String(ina219Measurement[1].shuntvoltage*1000,2) + "," +
+                      String(ina219Measurement[1].busvoltage*1000,2) + "," +
+                      String(ina219Measurement[1].current_mA,3) + "," +
+                      String(ina219Measurement[1].power_mW,3);
   
     sprintf(buf, "%4d ", int(ina219Measurement[1].busvoltage*1000));
     tft.drawString(buf, 12, 40, 2);
@@ -348,10 +354,10 @@ void loop() {
     ina219Measurement[2].power_mW = ina219_2.getPower_mW();
     ina219Measurement[2].loadvoltage = ina219Measurement[2].busvoltage + (ina219Measurement[2].shuntvoltage / 1000);
 
-    ina219_2S = String(ina219Measurement[2].shuntvoltage) + "," +
-                      String(ina219Measurement[2].busvoltage) + "," +
-                      String(ina219Measurement[2].current_mA) + "," +
-                      String(ina219Measurement[2].power_mW);
+    ina219_2S = String(ina219Measurement[2].shuntvoltage*1000,2) + "," +
+                      String(ina219Measurement[2].busvoltage*1000,2) + "," +
+                      String(ina219Measurement[2].current_mA,3) + "," +
+                      String(ina219Measurement[2].power_mW,3);
 
     sprintf(buf, "%4d ", int(ina219Measurement[2].busvoltage*1000));
     tft.drawString(buf, 12, 60, 2);
@@ -383,10 +389,10 @@ void loop() {
     ina219Measurement[3].power_mW = ina219_3.getPower_mW();
     loadvoltage = ina219Measurement[3].busvoltage + (ina219Measurement[3].shuntvoltage / 1000);
 
-    ina219_3S = String(ina219Measurement[3].shuntvoltage) + "," +
-                      String(ina219Measurement[3].busvoltage) + "," +
-                      String(ina219Measurement[3].current_mA) + "," +
-                      String(ina219Measurement[3].power_mW);
+    ina219_3S = String(ina219Measurement[3].shuntvoltage*1000,2) + "," +
+                      String(ina219Measurement[3].busvoltage*1000,2) + "," +
+                      String(ina219Measurement[3].current_mA,3) + "," +
+                      String(ina219Measurement[3].power_mW,3);
 
     sprintf(buf, "%4d ", int(ina219Measurement[3].busvoltage*1000));
     tft.drawString(buf, 12, 80, 2);

@@ -20,18 +20,20 @@
 
 #include <TFT_eSPI.h> // Graphics and font library for ILI9341 driver chip
 #include <SPI.h>
-////#include "SD.h"
+#include <SD.h>
 #include <Wire.h>
 #include <Adafruit_INA219.h>
 #include <ESP8266WiFi.h>
 #include <NTPClient.h>
 #include <WiFiUdp.h>
 #include "RTClib.h"
-#include "SdFat.h"
+////#include "SdFat.h"
 #include "config.h"
 
 
 ////#include "ESPDateTime.h"
+
+const uint8_t SD_CS = 16; // SD chip select
 
 Adafruit_INA219 ina219_0(0x40);
 Adafruit_INA219 ina219_1(0x41);
@@ -43,6 +45,7 @@ TFT_eSPI tft = TFT_eSPI();  // Invoke library, pins defined in User_Setup.h
 
 
 const int chipSelect = 16; 
+File file;
 
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP, "pool.ntp.org");
@@ -51,7 +54,7 @@ unsigned long drawTime = 0;
 
 boolean ina219Status[4];
 boolean sdStatus=false;
-
+char filename[30];
 
 // Set RTC_TYPE for file timestamps.
 // 0 - millis()
@@ -60,58 +63,6 @@ boolean sdStatus=false;
 // 3 - PCF8523
 #define RTC_TYPE 0
 
-// SD_FAT_TYPE = 0 for SdFat/File as defined in SdFatConfig.h,
-// 1 for FAT16/FAT32, 2 for exFAT, 3 for FAT16/FAT32 and exFAT.
-#define SD_FAT_TYPE 1
-/*
-  Change the value of SD_CS_PIN if you are using SPI and
-  your hardware does not use the default value, SS.
-  Common values are:
-  Arduino Ethernet shield: pin 4
-  Sparkfun SD shield: pin 8
-  Adafruit SD shields and modules: pin 10
-*/
-#define SDCARD_SS_PIN 16
-// SDCARD_SS_PIN is defined for the built-in SD on some boards.
-#ifndef SDCARD_SS_PIN
-const uint8_t SD_CS_PIN = SS;
-#else  // SDCARD_SS_PIN
-// Assume built-in SD is used.
-const uint8_t SD_CS_PIN = SDCARD_SS_PIN;
-#endif  // SDCARD_SS_PIN
-
-// Try max SPI clock for an SD. Reduce SPI_CLOCK if errors occur.
-#define SPI_CLOCK SD_SCK_MHZ(25)
-
-#if 0
-// Try to select the best SD card configuration.
-#if HAS_SDIO_CLASS
-#define SD_CONFIG SdioConfig(FIFO_SDIO)
-#elif  ENABLE_DEDICATED_SPI
-#define SD_CONFIG SdSpiConfig(SD_CS_PIN, DEDICATED_SPI, SPI_CLOCK)
-#else  // HAS_SDIO_CLASS
-#define SD_CONFIG SdSpiConfig(SD_CS_PIN, SHARED_SPI, SPI_CLOCK)
-#endif  // HAS_SDIO_CLASS
-#endif
-
-#define SD_CONFIG SdSpiConfig(SD_CS_PIN, SHARED_SPI, SPI_CLOCK)
-
-
-#if SD_FAT_TYPE == 0
-SdFat sd;
-File file;
-#elif SD_FAT_TYPE == 1
-SdFat32 sd;
-File32 file;
-#elif SD_FAT_TYPE == 2
-SdExFat sd;
-ExFile file;
-#elif SD_FAT_TYPE == 3
-SdFs sd;
-FsFile file;
-#else  // SD_FAT_TYPE
-#error Invalid SD_FAT_TYPE
-#endif  // SD_FAT_TYPE
 
 
 #if RTC_TYPE == 0
@@ -144,16 +95,13 @@ INA219Measurement ina219Measurement[4];
 
 //------------------------------------------------------------------------------
 // Call back for file timestamps.  Only called for file create and sync().
-void dateTime(uint16_t* date, uint16_t* time, uint8_t* ms10) {
+void dateTime(uint16_t* date, uint16_t* time) {
   DateTime now = rtc.now();
   // Return date using FS_DATE macro to format fields.
   *date = FS_DATE(now.year(), now.month(), now.day());
 
   // Return time using FS_TIME macro to format fields.
   *time = FS_TIME(now.hour(), now.minute(), now.second());
-
-  // Return low time bits in units of 10 ms, 0 <= ms10 <= 199.
-  *ms10 = now.second() & 1 ? 100 : 0;
 }
 
 //------------------------------------------------------------------------------
@@ -183,6 +131,7 @@ void printNow(Print* pr) {
  
 void setup(void) {
   unsigned long epochTime;
+  File root;
   
   Serial.begin(115200);
   while (!Serial) {
@@ -204,7 +153,11 @@ void setup(void) {
 
   Serial.print(" seconds since 1970: ");
   Serial.println(rtc.now().unixtime());
-    
+  DateTime now = rtc.now();
+  sprintf(filename, "INA219-%04d%02d%02d%02d%02d%02d.log",
+                now.year(), now.month(), now.day(), now.hour(), now.minute(), now.second());
+
+  printf("Filename: %s\n", filename);
   // Initialize the INA219.
   // By default the initialization will use the largest range (32V, 2A).  However
   // you can call a setCalibration function to change this range (see comments).
@@ -261,20 +214,24 @@ void setup(void) {
 
 
   // Set callback
-  FsDateTime::setCallback(dateTime);
+  SD.dateTimeCallback(dateTime);
 
-  if (!sd.begin(SD_CONFIG)) {
-    sd.initErrorHalt(&Serial);
-    tft.drawString("SD Failed", 0,100, 2);
-  } else {
+ if (!SD.begin(SD_CS)) {
+   tft.drawString("SD Failed", 0,100, 2);
+   Serial.println("SD.begin failed");
+   sdStatus = false;
+ } else {
     sdStatus = true;
     Serial.println("SD Initialized!");
-  }
+ }
+ 
 
   if (sdStatus == true) {
-    if (!file.open("RtcTest.txt", FILE_WRITE)) {
-      Serial.println(F("file.open failed"));
-      return;
+    file = SD.open(filename, FILE_WRITE);
+    {
+      Serial.print(F("file.opened with filename: "));
+      Serial.println(filename);
+      Serial.println(file);
     }
     // Print current date time to file.
     file.print(F("Test file at: "));
@@ -283,7 +240,10 @@ void setup(void) {
 
     file.close();
     // List files in SD root.
-    sd.ls(LS_DATE | LS_SIZE);
+//    sd.ls(LS_DATE | LS_SIZE);
+    root = SD.open("/");
+    printDirectory(root, 0);
+
     Serial.println(F("Done"));
   }
 }
@@ -299,6 +259,7 @@ void loop() {
   float loadvoltage = 0;
   float power_mW = 0;
   String ina219_0S, ina219_1S, ina219_2S, ina219_3S;
+  File root;
   
   DateTime dt = rtc.now();
 
@@ -450,8 +411,8 @@ void loop() {
     tft.drawString("N/A", 84, 80, 2);
   }
 
-  sprintf(buf, "%4d/%2d/%2d %2d:%02d", dt.year(), dt.month(), dt.day(), dt.hour(), dt.minute());
-  tft.drawString(buf, 0, 100, 2);
+  sprintf(buf, "%4d/%2d/%2d %2d:%02d:%02d", dt.year(), dt.month(), dt.day(), dt.hour(), dt.minute(), dt.second());
+  tft.drawString(buf, 0, 100, 1);
   timeClient.update();
 
   String dataString = fullstring+ina219_0S+","+
@@ -466,21 +427,52 @@ void loop() {
     if (count > 9) {
       count = 0;
       Serial.println("File lists");
-      sd.ls(LS_DATE|LS_SIZE);
+//      sd.ls(LS_DATE|LS_SIZE);
+      root = SD.open("/");
+      printDirectory(root, 0);
     }
     // print to the serial port too:
     Serial.println(dataString);
 
-    Serial.println("Open ina219.txt for writting");
-    if (!file.open("ina219.txt", FILE_WRITE)) {
-      Serial.println(F("file.open failed"));
-      delay(1000);
-      return;
-    }
+    printf("Open %s for writting\n", filename);
+    file = SD.open(filename, FILE_WRITE) ;
     file.print(dataString);
     file.println();
     file.close();
 
   }
   delay(1000);
+}
+
+
+
+
+void printDirectory(File dir, int numTabs) {
+  while (true) {
+
+    File entry =  dir.openNextFile();
+    if (! entry) {
+      // no more files
+      break;
+    }
+    for (uint8_t i = 0; i < numTabs; i++) {
+      Serial.print('\t');
+    }
+    Serial.print(entry.name());
+    if (entry.isDirectory()) {
+      Serial.println("/");
+      printDirectory(entry, numTabs + 1);
+    } else {
+      // files have sizes, directories do not
+      Serial.print("\t\t");
+      Serial.print(entry.size(), DEC);
+      time_t cr = entry.getCreationTime();
+      time_t lw = entry.getLastWrite();
+      struct tm * tmstruct = localtime(&cr);
+      Serial.printf("\tCREATION: %d-%02d-%02d %02d:%02d:%02d", (tmstruct->tm_year) + 1900, (tmstruct->tm_mon) + 1, tmstruct->tm_mday, tmstruct->tm_hour, tmstruct->tm_min, tmstruct->tm_sec);
+      tmstruct = localtime(&lw);
+      Serial.printf("\tLAST WRITE: %d-%02d-%02d %02d:%02d:%02d\n", (tmstruct->tm_year) + 1900, (tmstruct->tm_mon) + 1, tmstruct->tm_mday, tmstruct->tm_hour, tmstruct->tm_min, tmstruct->tm_sec);
+    }
+    entry.close();
+  }
 }

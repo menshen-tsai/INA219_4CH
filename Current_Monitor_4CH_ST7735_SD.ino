@@ -739,19 +739,19 @@ void setup(void) {
   tft.drawString("mA", 64, 0, 1); 
   tft.drawString("mW", 108, 0, 1); 
   
-  tft.drawString("1", 0, 20, 2);
-  tft.drawString("2", 0, 40, 2);
-  tft.drawString("3", 0, 60, 2);
-  tft.drawString("4", 0, 80, 2);
+  tft.drawString("1", 0, 18, 2);
+  tft.drawString("2", 0, 36, 2);
+  tft.drawString("3", 0, 54, 2);
+  tft.drawString("4", 0, 72, 2);
 
 
-  tft.drawString(bufIP, 0, 115, 1);
+  tft.drawString(bufIP, 0, 120, 1);
   
   // Set callback
   SD.dateTimeCallback(dateTime);
 
  if (!SD.begin(SD_CS)) {
-   tft.drawString("SD Failed", 0,100, 2);
+   tft.drawString("SD Failed", 0,100, 1);
    Serial.println("SD.begin failed");
    sdStatus = false;
  } else {
@@ -809,62 +809,62 @@ void loop() {
   if (i2cRead == false) {
     return;
   }
-  Serial.println("Data Ready");
+//  Serial.println("Data Ready");
   i2cRead = false;
 
-    ina219_0S = String(ina219Measurement.measurement[0].shuntvoltage*1000,2) + "," +
-                      String(ina219Measurement.measurement[0].busvoltage*1000,2) + "," +
+    ina219_0S = String(ina219Measurement.measurement[0].busvoltage*1000) + "," +
+                      String(ina219Measurement.measurement[0].shuntvoltage,2) + "," +
                       String(ina219Measurement.measurement[0].current_mA,3) + "," +
-                      String(ina219Measurement.measurement[0].power_mW,3);
+                      String(ina219Measurement.measurement[0].power_mW);
     sprintf(buf, "%4d ", int(ina219Measurement.measurement[0].busvoltage*1000));
-    tft.drawString(buf, 12, 20, 2);
+    tft.drawString(buf, 12, 18, 2);
     sprintf(buf, "%4d ", int(ina219Measurement.measurement[0].current_mA));
-    tft.drawString(buf, 48, 20, 2);
+    tft.drawString(buf, 48, 18, 2);
   
     sprintf(buf, "%5d", int(ina219Measurement.measurement[0].power_mW));
-    tft.drawString(buf, 84, 20, 2);
+    tft.drawString(buf, 84, 18, 2);
 
-    ina219_1S = String(ina219Measurement.measurement[1].shuntvoltage*1000,2) + "," +
-                      String(ina219Measurement.measurement[1].busvoltage*1000,2) + "," +
+    ina219_1S = String(ina219Measurement.measurement[1].busvoltage*1000) + "," +
+                      String(ina219Measurement.measurement[1].shuntvoltage,2) + "," +
                       String(ina219Measurement.measurement[1].current_mA,3) + "," +
-                      String(ina219Measurement.measurement[1].power_mW,3);
+                      String(ina219Measurement.measurement[1].power_mW);
   
     sprintf(buf, "%4d ", int(ina219Measurement.measurement[1].busvoltage*1000));
-    tft.drawString(buf, 12, 40, 2);
+    tft.drawString(buf, 12, 36, 2);
     sprintf(buf, "%4d ", int(ina219Measurement.measurement[1].current_mA));
-    tft.drawString(buf, 48, 40, 2);
+    tft.drawString(buf, 48, 36, 2);
   
     sprintf(buf, "%5d", int(ina219Measurement.measurement[1].power_mW));
-    tft.drawString(buf, 84, 40, 2);
+    tft.drawString(buf, 84, 36, 2);
 
-    ina219_2S = String(ina219Measurement.measurement[2].shuntvoltage*1000,2) + "," +
-                      String(ina219Measurement.measurement[2].busvoltage*1000,2) + "," +
+    ina219_2S = String(ina219Measurement.measurement[2].busvoltage*1000) + "," +
+                      String(ina219Measurement.measurement[2].shuntvoltage,2) + "," +
                       String(ina219Measurement.measurement[2].current_mA,3) + "," +
-                      String(ina219Measurement.measurement[2].power_mW,3);
+                      String(ina219Measurement.measurement[2].power_mW);
 
     sprintf(buf, "%4d ", int(ina219Measurement.measurement[2].busvoltage*1000));
-    tft.drawString(buf, 12, 60, 2);
+    tft.drawString(buf, 12, 54, 2);
     sprintf(buf, "%4d ", int(ina219Measurement.measurement[2].current_mA));
-    tft.drawString(buf, 48, 60, 2);
+    tft.drawString(buf, 48, 54, 2);
   
     sprintf(buf, "%5d", int(ina219Measurement.measurement[2].power_mW));
-    tft.drawString(buf, 84, 60, 2);
+    tft.drawString(buf, 84, 54, 2);
 
-    ina219_3S = String(ina219Measurement.measurement[3].shuntvoltage*1000,2) + "," +
-                      String(ina219Measurement.measurement[3].busvoltage*1000,2) + "," +
+    ina219_3S = String(ina219Measurement.measurement[3].busvoltage*1000,2) + "," +
+                      String(ina219Measurement.measurement[3].shuntvoltage*1000,2) + "," +
                       String(ina219Measurement.measurement[3].current_mA,3) + "," +
                       String(ina219Measurement.measurement[3].power_mW,3);
 
     sprintf(buf, "%4d ", int(ina219Measurement.measurement[3].busvoltage*1000));
-    tft.drawString(buf, 12, 80, 2);
+    tft.drawString(buf, 12, 72, 2);
     sprintf(buf, "%4d ", int(ina219Measurement.measurement[3].current_mA));
-    tft.drawString(buf, 48, 80, 2);
+    tft.drawString(buf, 48, 72, 2);
   
     sprintf(buf, "%5d", int(ina219Measurement.measurement[3].power_mW));
-    tft.drawString(buf, 84, 80, 2);
+    tft.drawString(buf, 84, 72, 2);
 
   sprintf(buf, "%4d/%2d/%2d %2d:%02d:%02d", dt.year(), dt.month(), dt.day(), dt.hour(), dt.minute(), dt.second());
-  tft.drawString(buf, 0, 100, 1);
+  tft.drawString(buf, 0, 110, 1);
   timeClient.update();
 
   String dataString = fullstring+ina219_0S+","+
@@ -940,7 +940,7 @@ void periodicI2C_Read(){
 
   
   if (i2cRead == false) {
-    Serial.println("Read I2C");
+//    Serial.println("Read I2C");
 
 
     if (ina219Status[0] == true) {

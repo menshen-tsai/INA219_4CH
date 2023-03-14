@@ -800,7 +800,7 @@ void loop() {
   server.handleClient();
   MDNS.update();
   
-  DateTime dt = rtc.now();
+  DateTime dt = ina219Measurement.dt;
 
   String currentDate = String(dt.year()) + "," + String(dt.month()) + "," + String(dt.day());
   String fullstring = currentDate + "," +

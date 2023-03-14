@@ -118,11 +118,18 @@ typedef struct
   float current_mA = 0;
   float loadvoltage = 0;
   float power_mW = 0;
+} Measurement;
+
+typedef struct
+{
+  Measurement measurement[4];
+  DateTime dt;
 } INA219Measurement;
 
+INA219Measurement ina219Measurement;
 
 
-INA219Measurement ina219Measurement[4];
+
 
 Ticker periodicI2C;
 boolean i2cRead = false;
@@ -805,149 +812,56 @@ void loop() {
   Serial.println("Data Ready");
   i2cRead = false;
 
-//  Serial.print(" seconds since 1970: ");
-//  Serial.print(dt.unixtime());
-//  Serial.print("\tCurrent Date/Time "); Serial.println(fullstring);
-//  if (ina219Status[0] == true) {
-
-    
-    ina219Measurement[0].shuntvoltage = ina219_0.getShuntVoltage_mV();
-    ina219Measurement[0].busvoltage = ina219_0.getBusVoltage_V();
-    ina219Measurement[0].current_mA = ina219_0.getCurrent_mA();
-    ina219Measurement[0].power_mW = ina219_0.getPower_mW();
-    ina219Measurement[0].loadvoltage = ina219Measurement[0].busvoltage + (ina219Measurement[0].shuntvoltage / 1000);
-    ina219_0S = String(ina219Measurement[0].shuntvoltage*1000,2) + "," +
-                      String(ina219Measurement[0].busvoltage*1000,2) + "," +
-                      String(ina219Measurement[0].current_mA,3) + "," +
-                      String(ina219Measurement[0].power_mW,3);
-    sprintf(buf, "%4d ", int(ina219Measurement[0].busvoltage*1000));
+    ina219_0S = String(ina219Measurement.measurement[0].shuntvoltage*1000,2) + "," +
+                      String(ina219Measurement.measurement[0].busvoltage*1000,2) + "," +
+                      String(ina219Measurement.measurement[0].current_mA,3) + "," +
+                      String(ina219Measurement.measurement[0].power_mW,3);
+    sprintf(buf, "%4d ", int(ina219Measurement.measurement[0].busvoltage*1000));
     tft.drawString(buf, 12, 20, 2);
-    sprintf(buf, "%4d ", int(ina219Measurement[0].current_mA));
+    sprintf(buf, "%4d ", int(ina219Measurement.measurement[0].current_mA));
     tft.drawString(buf, 48, 20, 2);
   
-    sprintf(buf, "%5d", int(ina219Measurement[0].power_mW));
+    sprintf(buf, "%5d", int(ina219Measurement.measurement[0].power_mW));
     tft.drawString(buf, 84, 20, 2);
-//  } else {
-//    ina219Measurement[0].shuntvoltage = -9999;
-//    ina219Measurement[0].busvoltage = -9999;
-//    ina219Measurement[0].current_mA = -9999;
-//    ina219Measurement[0].power_mW = -9999;
 
-//    ina219_0S = String(ina219Measurement[0].shuntvoltage) + "," +
-//                      String(ina219Measurement[0].busvoltage) + "," +
-//                      String(ina219Measurement[0].current_mA) + "," +
-//                      String(ina219Measurement[0].power_mW);
-//    
-
-//    tft.drawString("N/A", 12, 20, 2);
-//    tft.drawString("N/A", 48, 20, 2);
-//    tft.drawString("N/A", 84, 20, 2);
-//  }
-
-//  if (ina219Status[1] == true) {
-//    ina219Measurement[1].shuntvoltage = ina219_1.getShuntVoltage_mV();
-//    ina219Measurement[1].busvoltage = ina219_1.getBusVoltage_V();
-//    ina219Measurement[1].current_mA = ina219_1.getCurrent_mA();
-//    ina219Measurement[1].power_mW = ina219_1.getPower_mW();
-//    ina219Measurement[1].loadvoltage = ina219Measurement[1].busvoltage + (ina219Measurement[1].shuntvoltage / 1000);
-
-    ina219_1S = String(ina219Measurement[1].shuntvoltage*1000,2) + "," +
-                      String(ina219Measurement[1].busvoltage*1000,2) + "," +
-                      String(ina219Measurement[1].current_mA,3) + "," +
-                      String(ina219Measurement[1].power_mW,3);
+    ina219_1S = String(ina219Measurement.measurement[1].shuntvoltage*1000,2) + "," +
+                      String(ina219Measurement.measurement[1].busvoltage*1000,2) + "," +
+                      String(ina219Measurement.measurement[1].current_mA,3) + "," +
+                      String(ina219Measurement.measurement[1].power_mW,3);
   
-    sprintf(buf, "%4d ", int(ina219Measurement[1].busvoltage*1000));
+    sprintf(buf, "%4d ", int(ina219Measurement.measurement[1].busvoltage*1000));
     tft.drawString(buf, 12, 40, 2);
-    sprintf(buf, "%4d ", int(ina219Measurement[1].current_mA));
+    sprintf(buf, "%4d ", int(ina219Measurement.measurement[1].current_mA));
     tft.drawString(buf, 48, 40, 2);
   
-    sprintf(buf, "%5d", int(ina219Measurement[1].power_mW));
+    sprintf(buf, "%5d", int(ina219Measurement.measurement[1].power_mW));
     tft.drawString(buf, 84, 40, 2);
-//  } else {
-//    ina219Measurement[1].shuntvoltage = -9999;
-//    ina219Measurement[1].busvoltage = -9999;
-//    ina219Measurement[1].current_mA = -9999;
-//    ina219Measurement[1].power_mW = -9999;
-    
-//    ina219_1S = String(ina219Measurement[1].shuntvoltage) + "," +
-//                      String(ina219Measurement[1].busvoltage) + "," +
-//                      String(ina219Measurement[1].current_mA) + "," +
-//                      String(ina219Measurement[1].power_mW);
 
-//    tft.drawString("N/A", 12, 40, 2);
-//    tft.drawString("N/A", 48, 40, 2);
-//    tft.drawString("N/A", 84, 40, 2);
-//  }
+    ina219_2S = String(ina219Measurement.measurement[2].shuntvoltage*1000,2) + "," +
+                      String(ina219Measurement.measurement[2].busvoltage*1000,2) + "," +
+                      String(ina219Measurement.measurement[2].current_mA,3) + "," +
+                      String(ina219Measurement.measurement[2].power_mW,3);
 
-//  if (ina219Status[2] == true) {
-//    ina219Measurement[2].shuntvoltage = ina219_2.getShuntVoltage_mV();
-//    ina219Measurement[2].busvoltage = ina219_2.getBusVoltage_V();
-//    ina219Measurement[2].current_mA = ina219_2.getCurrent_mA();
-//    ina219Measurement[2].power_mW = ina219_2.getPower_mW();
-//    ina219Measurement[2].loadvoltage = ina219Measurement[2].busvoltage + (ina219Measurement[2].shuntvoltage / 1000);
-
-    ina219_2S = String(ina219Measurement[2].shuntvoltage*1000,2) + "," +
-                      String(ina219Measurement[2].busvoltage*1000,2) + "," +
-                      String(ina219Measurement[2].current_mA,3) + "," +
-                      String(ina219Measurement[2].power_mW,3);
-
-    sprintf(buf, "%4d ", int(ina219Measurement[2].busvoltage*1000));
+    sprintf(buf, "%4d ", int(ina219Measurement.measurement[2].busvoltage*1000));
     tft.drawString(buf, 12, 60, 2);
-    sprintf(buf, "%4d ", int(ina219Measurement[2].current_mA));
+    sprintf(buf, "%4d ", int(ina219Measurement.measurement[2].current_mA));
     tft.drawString(buf, 48, 60, 2);
   
-    sprintf(buf, "%5d", int(ina219Measurement[2].power_mW));
+    sprintf(buf, "%5d", int(ina219Measurement.measurement[2].power_mW));
     tft.drawString(buf, 84, 60, 2);
-//  } else {
-//    ina219Measurement[2].shuntvoltage = -9999;
-//    ina219Measurement[2].busvoltage = -9999;
-//    ina219Measurement[2].current_mA = -9999;
-//    ina219Measurement[2].power_mW = -9999;
-    
-//    ina219_2S = String(ina219Measurement[2].shuntvoltage) + "," +
-//                      String(ina219Measurement[2].busvoltage) + "," +
-//                      String(ina219Measurement[2].current_mA) + "," +
-//                      String(ina219Measurement[2].power_mW);
 
-//    tft.drawString("N/A", 12, 60, 2);
-//    tft.drawString("N/A", 48, 60, 2);
-//    tft.drawString("N/A", 84, 60, 2);
-//  }
+    ina219_3S = String(ina219Measurement.measurement[3].shuntvoltage*1000,2) + "," +
+                      String(ina219Measurement.measurement[3].busvoltage*1000,2) + "," +
+                      String(ina219Measurement.measurement[3].current_mA,3) + "," +
+                      String(ina219Measurement.measurement[3].power_mW,3);
 
-//  if (ina219Status[3] == true) {
-//    ina219Measurement[3].shuntvoltage = ina219_3.getShuntVoltage_mV();
-//    ina219Measurement[3].busvoltage = ina219_3.getBusVoltage_V();
-//    ina219Measurement[3].current_mA = ina219_3.getCurrent_mA();
-//    ina219Measurement[3].power_mW = ina219_3.getPower_mW();
-//    loadvoltage = ina219Measurement[3].busvoltage + (ina219Measurement[3].shuntvoltage / 1000);
-
-    ina219_3S = String(ina219Measurement[3].shuntvoltage*1000,2) + "," +
-                      String(ina219Measurement[3].busvoltage*1000,2) + "," +
-                      String(ina219Measurement[3].current_mA,3) + "," +
-                      String(ina219Measurement[3].power_mW,3);
-
-    sprintf(buf, "%4d ", int(ina219Measurement[3].busvoltage*1000));
+    sprintf(buf, "%4d ", int(ina219Measurement.measurement[3].busvoltage*1000));
     tft.drawString(buf, 12, 80, 2);
-    sprintf(buf, "%4d ", int(ina219Measurement[3].current_mA));
+    sprintf(buf, "%4d ", int(ina219Measurement.measurement[3].current_mA));
     tft.drawString(buf, 48, 80, 2);
   
-    sprintf(buf, "%5d", int(ina219Measurement[3].power_mW));
+    sprintf(buf, "%5d", int(ina219Measurement.measurement[3].power_mW));
     tft.drawString(buf, 84, 80, 2);
-//  } else {
-//    ina219Measurement[3].shuntvoltage = -9999;
-//    ina219Measurement[3].busvoltage = -9999;
-//    ina219Measurement[3].current_mA = -9999;
-//    ina219Measurement[3].power_mW = -9999;
-
-//    ina219_3S = String(ina219Measurement[3].shuntvoltage) + "," +
-//                      String(ina219Measurement[3].busvoltage) + "," +
-//                      String(ina219Measurement[3].current_mA) + "," +
-//                      String(ina219Measurement[3].power_mW);
-    
-//    tft.drawString("N/A", 12, 80, 2);
-//    tft.drawString("N/A", 48, 80, 2);
-//    tft.drawString("N/A", 84, 80, 2);
-//  }
 
   sprintf(buf, "%4d/%2d/%2d %2d:%02d:%02d", dt.year(), dt.month(), dt.day(), dt.hour(), dt.minute(), dt.second());
   tft.drawString(buf, 0, 100, 1);
@@ -1018,59 +932,66 @@ void printDirectory(File dir, int numTabs) {
 
 
 void periodicI2C_Read(){
+
+  ina219Measurement.dt = rtc.now();
+//  String currentDate = String(dt.year()) + "," + String(dt.month()) + "," + String(dt.day());
+//  String fullstring = currentDate + "," +
+//         String(dt.hour()) + "," + String(dt.minute()) + "," + String(dt.second()) + "," ;  
+
+  
   if (i2cRead == false) {
     Serial.println("Read I2C");
 
 
     if (ina219Status[0] == true) {
-      ina219Measurement[0].shuntvoltage = ina219_0.getShuntVoltage_mV();
-      ina219Measurement[0].busvoltage = ina219_0.getBusVoltage_V();
-      ina219Measurement[0].current_mA = ina219_0.getCurrent_mA();
-      ina219Measurement[0].power_mW = ina219_0.getPower_mW();
-      ina219Measurement[0].loadvoltage = ina219Measurement[0].busvoltage + (ina219Measurement[0].shuntvoltage / 1000);
+      ina219Measurement.measurement[0].shuntvoltage = ina219_0.getShuntVoltage_mV();
+      ina219Measurement.measurement[0].busvoltage = ina219_0.getBusVoltage_V();
+      ina219Measurement.measurement[0].current_mA = ina219_0.getCurrent_mA();
+      ina219Measurement.measurement[0].power_mW = ina219_0.getPower_mW();
+      ina219Measurement.measurement[0].loadvoltage = ina219Measurement.measurement[0].busvoltage + (ina219Measurement.measurement[0].shuntvoltage / 1000);
     } else {
-      ina219Measurement[0].shuntvoltage = -9.999;
-      ina219Measurement[0].busvoltage = -9.999;
-      ina219Measurement[0].current_mA = -9.999;
-      ina219Measurement[0].power_mW = -9.999;    
+      ina219Measurement.measurement[0].shuntvoltage = -9.999;
+      ina219Measurement.measurement[0].busvoltage = -9.999;
+      ina219Measurement.measurement[0].current_mA = -9.999;
+      ina219Measurement.measurement[0].power_mW = -9.999;    
     }
 
     if (ina219Status[1] == true) {
-      ina219Measurement[1].shuntvoltage = ina219_1.getShuntVoltage_mV();
-      ina219Measurement[1].busvoltage = ina219_1.getBusVoltage_V();
-      ina219Measurement[1].current_mA = ina219_1.getCurrent_mA();
-      ina219Measurement[1].power_mW = ina219_1.getPower_mW();
-      ina219Measurement[1].loadvoltage = ina219Measurement[1].busvoltage + (ina219Measurement[1].shuntvoltage / 1000);
+      ina219Measurement.measurement[1].shuntvoltage = ina219_1.getShuntVoltage_mV();
+      ina219Measurement.measurement[1].busvoltage = ina219_1.getBusVoltage_V();
+      ina219Measurement.measurement[1].current_mA = ina219_1.getCurrent_mA();
+      ina219Measurement.measurement[1].power_mW = ina219_1.getPower_mW();
+      ina219Measurement.measurement[1].loadvoltage = ina219Measurement.measurement[1].busvoltage + (ina219Measurement.measurement[1].shuntvoltage / 1000);
     } else {
-      ina219Measurement[1].shuntvoltage = -9.999;
-      ina219Measurement[1].busvoltage = -9.999;
-      ina219Measurement[1].current_mA = -9.999;
-      ina219Measurement[1].power_mW = -9.999;    
+      ina219Measurement.measurement[1].shuntvoltage = -9.999;
+      ina219Measurement.measurement[1].busvoltage = -9.999;
+      ina219Measurement.measurement[1].current_mA = -9.999;
+      ina219Measurement.measurement[1].power_mW = -9.999;    
     }
 
     if (ina219Status[2] == true) {
-      ina219Measurement[2].shuntvoltage = ina219_2.getShuntVoltage_mV();
-      ina219Measurement[2].busvoltage = ina219_2.getBusVoltage_V();
-      ina219Measurement[2].current_mA = ina219_2.getCurrent_mA();
-      ina219Measurement[2].power_mW = ina219_2.getPower_mW();
-      ina219Measurement[2].loadvoltage = ina219Measurement[2].busvoltage + (ina219Measurement[2].shuntvoltage / 1000);
+      ina219Measurement.measurement[2].shuntvoltage = ina219_2.getShuntVoltage_mV();
+      ina219Measurement.measurement[2].busvoltage = ina219_2.getBusVoltage_V();
+      ina219Measurement.measurement[2].current_mA = ina219_2.getCurrent_mA();
+      ina219Measurement.measurement[2].power_mW = ina219_2.getPower_mW();
+      ina219Measurement.measurement[2].loadvoltage = ina219Measurement.measurement[2].busvoltage + (ina219Measurement.measurement[2].shuntvoltage / 1000);
     } else {
-      ina219Measurement[2].shuntvoltage = -9.999;
-      ina219Measurement[2].busvoltage = -9.999;
-      ina219Measurement[2].current_mA = -9.999;
-      ina219Measurement[2].power_mW = -9.999;    
+      ina219Measurement.measurement[2].shuntvoltage = -9.999;
+      ina219Measurement.measurement[2].busvoltage = -9.999;
+      ina219Measurement.measurement[2].current_mA = -9.999;
+      ina219Measurement.measurement[2].power_mW = -9.999;    
     }
     if (ina219Status[3] == true) {
-      ina219Measurement[3].shuntvoltage = ina219_3.getShuntVoltage_mV();
-      ina219Measurement[3].busvoltage = ina219_3.getBusVoltage_V();
-      ina219Measurement[3].current_mA = ina219_3.getCurrent_mA();
-      ina219Measurement[3].power_mW = ina219_3.getPower_mW();
-      ina219Measurement[3].loadvoltage = ina219Measurement[3].busvoltage + (ina219Measurement[3].shuntvoltage / 1000);
+      ina219Measurement.measurement[3].shuntvoltage = ina219_3.getShuntVoltage_mV();
+      ina219Measurement.measurement[3].busvoltage = ina219_3.getBusVoltage_V();
+      ina219Measurement.measurement[3].current_mA = ina219_3.getCurrent_mA();
+      ina219Measurement.measurement[3].power_mW = ina219_3.getPower_mW();
+      ina219Measurement.measurement[3].loadvoltage = ina219Measurement.measurement[3].busvoltage + (ina219Measurement.measurement[3].shuntvoltage / 1000);
     } else {
-      ina219Measurement[3].shuntvoltage = -9.999;
-      ina219Measurement[3].busvoltage = -9.999;
-      ina219Measurement[3].current_mA = -9.999;
-      ina219Measurement[3].power_mW = -9.999;    
+      ina219Measurement.measurement[3].shuntvoltage = -9.999;
+      ina219Measurement.measurement[3].busvoltage = -9.999;
+      ina219Measurement.measurement[3].current_mA = -9.999;
+      ina219Measurement.measurement[3].power_mW = -9.999;    
     }
     i2cRead = true;
   } else {

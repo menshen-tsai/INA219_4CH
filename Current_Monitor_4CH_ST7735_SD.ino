@@ -27,6 +27,9 @@
 #include <WiFiClient.h>
 #include <ESP8266WebServer.h>
 #include <ESP8266mDNS.h>
+#include <ESP8266WiFiMulti.h>
+
+
 
 #include <NTPClient.h>
 #include <WiFiUdp.h>
@@ -80,6 +83,10 @@ File file;
 
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP, "pool.ntp.org");
+ESP8266WiFiMulti wifiMulti;
+
+// WiFi connect timeout per AP. Increase when connecting takes longer.
+const uint32_t connectTimeoutMs = 5000;
 
 unsigned long drawTime = 0;
 
@@ -626,14 +633,34 @@ void setup(void) {
   fsOK = fileSystem->begin();
   DBG_OUTPUT_PORT.println(fsOK ? F("Filesystem initialized.") : F("Filesystem init failed!"));
 
-  
-  Serial.print("Connecting to ");
-  Serial.println(ssid);
-  WiFi.begin(ssid, password);
-  while (WiFi.status() != WL_CONNECTED) {
+  // Don't save WiFi configuration in flash - optional
+  WiFi.persistent(false);
+
+  // Set WiFi to station mode
+  WiFi.mode(WIFI_STA);
+
+  // Register multi WiFi networks
+  wifiMulti.addAP(SSID1, PASS1);
+  wifiMulti.addAP(SSID2, PASS2);
+
+
+  // Maintain WiFi connection
+  while (wifiMulti.run(connectTimeoutMs) != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
   }
+  Serial.print("WiFi connected: ");
+  Serial.print(WiFi.SSID());
+  Serial.print(" ");
+  Serial.println(WiFi.localIP());
+  
+//  Serial.print("Connecting to ");
+//  Serial.println(ssid);
+//  WiFi.begin(ssid, password);
+//  while (WiFi.status() != WL_CONNECTED) {
+//    delay(500);
+//    Serial.print(".");
+//  }
   ip = WiFi.localIP();
   Serial.print("IP: "); Serial.println(ip);
   sprintf(bufIP, "%d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3]);
